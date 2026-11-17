@@ -37,6 +37,7 @@ targets:
         INFOPLIST_KEY_UISupportedInterfaceOrientations: UIInterfaceOrientationPortrait
         TARGETED_DEVICE_FAMILY: "1"
         CODE_SIGN_STYLE: Automatic
+        DEVELOPMENT_TEAM: Y5CW757KL2
       configs:
         Debug:
           PRODUCT_BUNDLE_IDENTIFIER: com.priyendra.barbellmonk.dev
