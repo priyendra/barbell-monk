@@ -16,7 +16,7 @@ barbellmonk does not teach. There are no videos, no form tutorials and no explan
 - iPhone first. Apple Watch later.
 - Wi-Fi is always available. There is no offline mode.
 - Session types, about 1 hour each: lifting, core + cardio, flexibility + cardio.
-- Also tracks body weight, daily steps and nutrition (calories and protein only).
+- Also tracks body weight, daily movement and nutrition (calories and protein only).
 
 ## Interaction
 
@@ -104,10 +104,13 @@ The same idea applies here: remove the effort and accept rough inputs.
 - **Body weight comes from the smart scale through Apple Health**, so there is no manual logging. Saying a number ("182.4 this morning") also works.
 - **The app reports the trend, never one day's reading.** Daily weight swings with water and salt, so a smoothed average is what counts. Target rate of fat loss: 0.5–1% of body weight per week.
 - **Other scale measurements**, such as body fat %, are read too but shown only as trends, because scale body-fat readings are noisy.
-- **Daily steps come from Apple Health**, which merges Watch and iPhone counts, so no Watch app is needed.
-  - There is a minimum daily step target, set from your recent baseline and raised gradually.
-  - If you're behind late in the day, the app says how long a walk on the walking pad would close the gap.
-  - Steps need no separate calorie math, because the scale-based burn estimate already reflects them.
+- **Daily movement is measured in active minutes.** They come from barbellmonk's own sessions plus Apple Health, which merges Watch and iPhone data, so no Watch app is needed:
+  - lifting, core and cardio sessions count in full; flexibility sessions count half, since the effort is low;
+  - brisk walking outside sessions (about 100+ steps per minute), including the walking pad;
+  - other workouts the Watch records, such as a hike or a ski day.
+- **One daily target, plus a walking floor.** The active-minutes target is the same every day, so a lifting day needs less extra walking than a flexibility day. A separate walking minimum outside workouts, starting around 20 minutes, covers everyday movement, because an hour of training doesn't undo sitting the rest of the day. Both targets start from your recent baseline and rise slowly.
+- **A 6 pm nudge** if you're short, saying how many minutes are left and that a walk on the walking pad closes the gap.
+- Step counts are still shown, just not as a goal. Movement needs no separate calorie math, because the scale-based burn estimate already reflects it.
 - **Food is tracked as two numbers: calories and protein.** You describe a meal in plain words, or take a photo, and the coach estimates both numbers. Repeat meals are saved and reused by name ("my usual breakfast").
 - **Logging happens outside sessions**, through Siri or a simple chat screen in the app.
 - **The scale corrects the food log.** The engine compares logged intake with the weight trend to estimate how much you actually burn. Consistent estimation errors cancel out, so consistency matters more than precision.
@@ -119,7 +122,7 @@ The same idea applies here: remove the effort and accept rough inputs.
 
 Each step adds one new layer of the system:
 
-1. **Body weight and steps.** App skeleton, Apple Health, engine trends, simple screens.
+1. **Body weight and active time.** App skeleton, Apple Health, engine trends, simple screens.
 2. **Food logging and adaptive calorie targets.** The first use of Claude, with chat and voice input outside sessions.
 3. **Cardio sessions.** The first live voice sessions; timers and interval cues prove out the voice loop.
 4. **Lifting.** Progression, calibration, plate math and set evidence, built on a voice loop that already works.
