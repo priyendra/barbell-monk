@@ -12,11 +12,15 @@ struct TodayView: View {
                 .toolbar {
                     Menu("Dev", systemImage: "hammer") {
                         Button("Add sample data to Health") { Task { await model.addSampleDataToHealth() } }
+                        Button("Preview walk nudge") { Task { await model.previewWalkNudge() } }
                     }
                 }
                 #endif
         }
-        .task { await model.load() }
+        .task {
+            await model.load()
+            await model.requestNotificationPermission()
+        }
     }
 
     @ViewBuilder private var content: some View {

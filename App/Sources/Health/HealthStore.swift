@@ -79,6 +79,27 @@ struct HealthStore: HealthSource {
         return ActivityData(steps: steps, intervals: intervals)
     }
 
+    /// Calls `onUpdate` when new steps or workouts arrive, including when iOS
+    /// wakes the app in the background for them (at most hourly).
+    func observeActivity(onUpdate: @escaping @Sendable () async -> Void) {
+        let types: [HKSampleType] = [HKQuantityType(.stepCount), HKObjectType.workoutType()]
+        for type in types {
+            let query = HKObserverQuery(sampleType: type, predicate: nil) { _, completion, error in
+                guard error == nil else { return completion() }
+                // HealthKit's completion handler can be called from any thread,
+                // but isn't annotated Sendable. Calling it after the update
+                // keeps the app awake in the background until the work is done.
+                nonisolated(unsafe) let completion = completion
+                Task {
+                    await onUpdate()
+                    completion()
+                }
+            }
+            store.execute(query)
+            store.enableBackgroundDelivery(for: type, frequency: .hourly) { _, _ in }
+        }
+    }
+
     /// How much a workout counts toward active time. Walks are left out
     /// because their brisk minutes already count through steps.
     static func credit(for type: HKWorkoutActivityType) -> Double? {

@@ -20,11 +20,18 @@ final class TodayModel {
     private(set) var state: State = .loading
     private let source: any HealthSource
     private let targetStore: TargetStore
+    private let nudges: WalkNudgeScheduler?
     private let calendar: Calendar
 
-    init(source: any HealthSource, targetStore: TargetStore, calendar: Calendar = .current) {
+    init(
+        source: any HealthSource,
+        targetStore: TargetStore,
+        nudges: WalkNudgeScheduler?,
+        calendar: Calendar = .current
+    ) {
         self.source = source
         self.targetStore = targetStore
+        self.nudges = nudges
         self.calendar = calendar
     }
 
@@ -37,10 +44,21 @@ final class TodayModel {
             let now = Date.now
             let yearAgo = calendar.date(byAdding: .year, value: -1, to: now)!
             let weight = WeightTrend(readings: try await source.weightReadings(since: yearAgo), calendar: calendar)
-            state = .ready(weight: weight, activity: try await loadActivity(now: now))
+            let activity = try await loadActivity(now: now)
+            state = .ready(weight: weight, activity: activity)
+            await nudges?.update(
+                minutesToWalk: activity.targets.minutesToWalk(today: activity.today), now: now, calendar: calendar
+            )
         } catch {
             state = .failed(error.localizedDescription)
         }
+    }
+
+    /// Asks for notification permission once Apple Health is connected, so
+    /// the two prompts don't arrive together on first launch.
+    func requestNotificationPermission() async {
+        guard case .ready = state else { return }
+        await nudges?.requestAuthorization()
     }
 
     func connect() async {
@@ -51,6 +69,7 @@ final class TodayModel {
             return
         }
         await load()
+        await requestNotificationPermission()
     }
 
     /// Today's active time plus the last 30 days, which set and raise the targets.
@@ -74,6 +93,11 @@ final class TodayModel {
     }
 
     #if DEBUG && targetEnvironment(simulator)
+    func previewWalkNudge() async {
+        guard case .ready(_, let activity) = state else { return }
+        await nudges?.preview(minutesToWalk: max(1, activity.targets.minutesToWalk(today: activity.today)))
+    }
+
     /// Writes `SampleData` into Apple Health for whatever is missing, for
     /// trying the real read path. Simulator only: the simulator's Health is
     /// separate from the phone's, so this never touches real records.
