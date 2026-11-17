@@ -48,7 +48,7 @@ struct TodayView: View {
         } description: {
             Text("Weigh in on your scale and it will show up here.")
         } actions: {
-            #if DEBUG
+            #if DEBUG && targetEnvironment(simulator)
             Button("Add sample data to Health") { Task { await model.addSampleDataToHealth() } }
             #endif
         }

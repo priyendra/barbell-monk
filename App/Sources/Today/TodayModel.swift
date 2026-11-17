@@ -44,9 +44,10 @@ final class TodayModel {
         await load()
     }
 
-    #if DEBUG
-    /// Writes `SampleData` into Apple Health, for trying the real read path
-    /// in the simulator.
+    #if DEBUG && targetEnvironment(simulator)
+    /// Writes `SampleData` into Apple Health, for trying the real read path.
+    /// Simulator only: the simulator's Health is separate from the phone's,
+    /// so this can never write sample data into real health records.
     func addSampleDataToHealth() async {
         guard let health = source as? HealthStore else { return }
         do {
