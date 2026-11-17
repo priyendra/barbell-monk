@@ -20,7 +20,10 @@ targets:
   BarbellMonk:
     type: application
     platform: iOS
-    sources: [App/Sources]
+    sources:
+      - App/Sources
+      - path: App/Resources
+        buildPhase: resources
     dependencies:
       - package: Engine
     entitlements:
@@ -31,6 +34,9 @@ targets:
     settings:
       base:
         GENERATE_INFOPLIST_FILE: YES
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        # Only standard HTTPS, so App Store Connect can skip the export question.
+        INFOPLIST_KEY_ITSAppUsesNonExemptEncryption: NO
         INFOPLIST_KEY_NSHealthShareUsageDescription: barbellmonk reads your weight, body measurements and activity to track trends and set daily movement targets.
         INFOPLIST_KEY_NSHealthUpdateUsageDescription: barbellmonk saves weights you tell it, so all your weight data stays in Apple Health.
         INFOPLIST_KEY_UILaunchScreen_Generation: YES
