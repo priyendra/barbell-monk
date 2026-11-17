@@ -92,6 +92,16 @@ private func isClose(_ a: Double?, _ b: Double, tolerance: Double = 1e-9) -> Boo
         #expect(isClose(trend.current, 200.2))
     }
 
+    @Test func laterReadingIsUsedWhenFirstOfDayIsFarOff() {
+        // Someone else weighed in first, unreviewed; the user's reading follows.
+        let trend = WeightTrend(
+            readings: [reading(0, 200), reading(1, 140, hour: 6), reading(1, 199, hour: 7)],
+            calendar: calendar
+        )
+        #expect(trend.needingReview.isEmpty)
+        #expect(trend.days.map(\.reading.weight) == [200, 199])
+    }
+
     @Test func readingAfterLongGapIsTrusted() {
         // Back from two weeks away, 7.5% lighter: not an outlier, and it
         // gets the capped post-gap weight of 1 - 0.9^7.
@@ -120,6 +130,17 @@ private func isClose(_ a: Double?, _ b: Double, tolerance: Double = 1e-9) -> Boo
         let readings = (0..<20).map { reading($0, 200) } + [reading(20, 230)]
         let rate = WeightTrend(readings: readings, calendar: calendar).weeklyRate()
         #expect(isClose(rate?.perWeek, 0))
+    }
+
+    @Test(arguments: [
+        (-0.004, WeightTrend.Rate.Pace.slower),
+        (-0.007, .onTarget),
+        (-0.012, .faster),
+        (0.002, .slower),
+    ])
+    func paceComparesLossWithTarget(fraction: Double, expected: WeightTrend.Rate.Pace) {
+        let rate = WeightTrend.Rate(perWeek: fraction * 190, fractionPerWeek: fraction)
+        #expect(rate.pace() == expected)
     }
 
     @Test func dayBoundariesFollowTheCalendarAcrossDaylightSaving() {

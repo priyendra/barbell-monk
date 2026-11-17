@@ -12,3 +12,6 @@ xcuserdata/
 *.xcuserstate
 
 .DS_Store
+
+# Generated from project.yml alongside the Xcode project
+App/BarbellMonk.entitlements

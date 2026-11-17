@@ -31,7 +31,8 @@ public struct WeightTrend: Sendable {
     public struct Day: Sendable, Equatable {
         /// Start of the calendar day.
         public var date: Date
-        /// The day's first reading that wasn't rejected.
+        /// The day's earliest reading that fits the trend, or its earliest
+        /// reading if none do (in which case the day needs review).
         public var reading: Reading
         /// The trend after this day.
         public var trend: Double
@@ -45,6 +46,22 @@ public struct WeightTrend: Sendable {
         public var perWeek: Double
         /// `perWeek` as a fraction of the current trend, e.g. -0.005 for -0.5%.
         public var fractionPerWeek: Double
+
+        public enum Pace: Sendable, Equatable {
+            case slower, onTarget, faster
+        }
+
+        /// Losing 0.5–1% of body weight a week loses fat while keeping muscle.
+        public static let fatLossTarget = 0.005...0.01
+
+        /// How this rate compares with a target range of weekly loss, given
+        /// as fractions of body weight. Gaining counts as slower.
+        public func pace(losing target: ClosedRange<Double> = fatLossTarget) -> Pace {
+            let loss = -fractionPerWeek
+            if loss < target.lowerBound { return .slower }
+            if loss > target.upperBound { return .faster }
+            return .onTarget
+        }
     }
 
     /// Readings this far from the trend (as a fraction of it) need review.
@@ -58,27 +75,33 @@ public struct WeightTrend: Sendable {
 
     public init(readings: [Reading], calendar: Calendar, smoothing: Double = 0.1) {
         self.calendar = calendar
-        let firstPerDay = Dictionary(
+        let readingsByDay = Dictionary(
             grouping: readings.filter { $0.review != .rejected },
             by: { calendar.startOfDay(for: $0.date) }
         )
-        .compactMapValues { $0.min { $0.date < $1.date } }
+        .mapValues { $0.sorted { $0.date < $1.date } }
         .sorted { $0.key < $1.key }
 
         var days: [Day] = []
         var trend: Double?
         var trendDate: Date?
-        for (date, reading) in firstPerDay {
+        for (date, candidates) in readingsByDay {
             guard let previous = trend, let previousDate = trendDate else {
+                let reading = candidates[0]
                 trend = reading.weight
                 trendDate = date
                 days.append(Day(date: date, reading: reading, trend: reading.weight, needsReview: false))
                 continue
             }
             let gap = calendar.dateComponents([.day], from: previousDate, to: date).day ?? 1
-            let deviation = abs(reading.weight - previous) / previous
-            if reading.review == .unreviewed, gap <= Self.maxGapDays, deviation > Self.outlierThreshold {
-                days.append(Day(date: date, reading: reading, trend: previous, needsReview: true))
+            // Use the day's earliest reading that fits the trend, so someone
+            // else stepping on the scale first doesn't hide the user's reading.
+            let fits = { (reading: Reading) in
+                reading.review == .accepted || gap > Self.maxGapDays
+                    || abs(reading.weight - previous) / previous <= Self.outlierThreshold
+            }
+            guard let reading = candidates.first(where: fits) else {
+                days.append(Day(date: date, reading: candidates[0], trend: previous, needsReview: true))
                 continue
             }
             // A reading after skipped days stands in for the missing ones too.

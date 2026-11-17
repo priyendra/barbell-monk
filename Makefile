@@ -1,4 +1,6 @@
 SIMULATOR ?= iPhone 18 Pro
+# Launch arguments, e.g. `make run ARGS=-sampleData` to skip Apple Health.
+ARGS ?=
 DESTINATION = platform=iOS Simulator,name=$(SIMULATOR)
 
 .PHONY: project test build run clean
@@ -22,7 +24,7 @@ run: build
 	xcrun simctl boot '$(SIMULATOR)' 2>/dev/null || true
 	-open "$$(xcode-select -p)/Applications/Simulator.app" 2>/dev/null
 	xcrun simctl install '$(SIMULATOR)' build/Build/Products/Debug-iphonesimulator/BarbellMonk.app
-	xcrun simctl launch '$(SIMULATOR)' com.priyendra.barbellmonk.dev
+	xcrun simctl launch --terminate-running-process '$(SIMULATOR)' com.priyendra.barbellmonk.dev $(ARGS)
 
 clean:
 	rm -rf build BarbellMonk.xcodeproj Engine/.build
