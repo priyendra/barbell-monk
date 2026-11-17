@@ -24,6 +24,8 @@ public struct ActiveDay: Sendable, Equatable {
     /// About 100 steps a minute is where walking becomes moderate effort.
     public static let briskCadence = 100.0
 
+    /// Start of the calendar day.
+    public let date: Date
     /// Active minutes, counting low-effort minutes at their credit.
     public let activeMinutes: Double
     /// Brisk walking minutes outside sessions and workouts. These count
@@ -73,7 +75,15 @@ public struct ActiveDay: Sendable, Equatable {
             if !covered[minute] { walkingMinutes += 1 }
         }
 
+        self.date = dayStart
         self.activeMinutes = credit.reduce(0, +)
+        self.walkingMinutes = walkingMinutes
+    }
+
+    /// A day whose totals are already known, e.g. loaded from storage.
+    public init(date: Date, activeMinutes: Double, walkingMinutes: Int) {
+        self.date = date
+        self.activeMinutes = activeMinutes
         self.walkingMinutes = walkingMinutes
     }
 }
