@@ -1,0 +1,14 @@
+# Generated from project.yml by `make project`
+BarbellMonk.xcodeproj/
+
+# Build output
+build/
+Engine/.build/
+DerivedData/
+.swiftpm/
+
+# Xcode user state
+xcuserdata/
+*.xcuserstate
+
+.DS_Store

@@ -1,0 +1,39 @@
+# Generates BarbellMonk.xcodeproj. Run `make project` after editing.
+#
+# Debug builds install as "barbellmonk dev" (test data); Release builds install
+# as "barbellmonk" (real data). The two have different bundle IDs, so both can
+# live on the phone side by side.
+name: BarbellMonk
+options:
+  deploymentTarget:
+    iOS: "26.0"
+  createIntermediateGroups: true
+packages:
+  Engine:
+    path: Engine
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    MARKETING_VERSION: "0.1.0"
+    CURRENT_PROJECT_VERSION: "1"
+targets:
+  BarbellMonk:
+    type: application
+    platform: iOS
+    sources: [App/Sources]
+    dependencies:
+      - package: Engine
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_KEY_UILaunchScreen_Generation: YES
+        INFOPLIST_KEY_UISupportedInterfaceOrientations: UIInterfaceOrientationPortrait
+        TARGETED_DEVICE_FAMILY: "1"
+        CODE_SIGN_STYLE: Automatic
+      configs:
+        Debug:
+          PRODUCT_BUNDLE_IDENTIFIER: com.priyendra.barbellmonk.dev
+          INFOPLIST_KEY_CFBundleDisplayName: barbellmonk dev
+        Release:
+          PRODUCT_BUNDLE_IDENTIFIER: com.priyendra.barbellmonk
+          INFOPLIST_KEY_CFBundleDisplayName: barbellmonk
