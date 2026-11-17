@@ -8,6 +8,13 @@ struct TodayView: View {
         NavigationStack {
             content
                 .navigationTitle("Today")
+                #if DEBUG && targetEnvironment(simulator)
+                .toolbar {
+                    Menu("Dev", systemImage: "hammer") {
+                        Button("Add sample data to Health") { Task { await model.addSampleDataToHealth() } }
+                    }
+                }
+                #endif
         }
         .task { await model.load() }
     }
@@ -31,27 +38,67 @@ struct TodayView: View {
                 systemImage: "exclamationmark.triangle",
                 description: Text(message)
             )
-        case .ready(let trend):
-            if let current = trend.current {
-                List {
+        case .ready(let trend, let activity):
+            List {
+                ActivitySection(activity: activity)
+                if let current = trend.current {
                     WeightSection(trend: trend, current: current)
+                } else {
+                    Section("Weight") {
+                        Text("No readings yet. Weigh in on your scale and it will show up here.")
+                            .foregroundStyle(.secondary)
+                    }
                 }
-            } else {
-                noReadings
             }
+            .refreshable { await model.load() }
         }
     }
+}
 
-    private var noReadings: some View {
-        ContentUnavailableView {
-            Label("No weight readings yet", systemImage: "scalemass")
-        } description: {
-            Text("Weigh in on your scale and it will show up here.")
-        } actions: {
-            #if DEBUG && targetEnvironment(simulator)
-            Button("Add sample data to Health") { Task { await model.addSampleDataToHealth() } }
-            #endif
+private struct ActivitySection: View {
+    let activity: TodayModel.Activity
+
+    var body: some View {
+        let targets = activity.targets
+        let today = activity.today
+        Section("Activity") {
+            ProgressRow(title: "Active", minutes: today.activeMinutes, target: targets.active.minutes)
+            ProgressRow(
+                title: "Walking outside workouts",
+                minutes: Double(today.walkingMinutes),
+                target: targets.walking.minutes
+            )
+            let toWalk = targets.minutesToWalk(today: today)
+            if toWalk > 0 {
+                Label("A \(toWalk)-minute brisk walk closes both", systemImage: "figure.walk")
+            } else {
+                Label("Both targets met today", systemImage: "checkmark.circle.fill")
+                    .foregroundStyle(.green)
+            }
+            LabeledContent("Steps today", value: activity.stepsToday.formatted())
         }
+    }
+}
+
+private struct ProgressRow: View {
+    let title: String
+    let minutes: Double
+    let target: Int
+
+    var body: some View {
+        let met = minutes >= Double(target)
+        VStack(alignment: .leading, spacing: 6) {
+            HStack {
+                Text(title)
+                Spacer()
+                Text("\(Int(minutes)) / \(target) min")
+                    .monospacedDigit()
+                    .foregroundStyle(.secondary)
+            }
+            ProgressView(value: min(minutes, Double(target)), total: Double(target))
+                .tint(met ? .green : .accentColor)
+        }
+        .padding(.vertical, 2)
     }
 }
 
